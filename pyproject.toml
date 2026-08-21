@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sag-mcp-server"
+version = "0.1.0"
+description = "MCP server for SAG knowledge base — full read/write access via Streamable HTTP"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Zleap AI" }]
+keywords = ["mcp", "knowledge-base", "rag", "sag", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "mcp>=1.28,<2",
+    "httpx>=0.27",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[project.scripts]
+sag-mcp-server = "sag_mcp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/Zleap-AI/sag-mcp-server"
+Repository = "https://github.com/Zleap-AI/sag-mcp-server"
+Issues = "https://github.com/Zleap-AI/sag-mcp-server/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sag_mcp"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100

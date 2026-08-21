@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "sag": {
+      "type": "http",
+      "url": "http://localhost:9003/mcp/",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN_HERE"
+      }
+    }
+  }
+}

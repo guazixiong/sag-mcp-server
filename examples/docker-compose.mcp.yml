@@ -1,0 +1,28 @@
+# Example: Run SAG MCP Server alongside SAG
+# Copy this file to your SAG deployment directory and adjust as needed.
+
+services:
+  # SAG API (existing)
+  api:
+    image: sag-api:latest
+    ports:
+      - "9002:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/v1/system/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # SAG MCP Server (new)
+  mcp:
+    build: .
+    environment:
+      SAG_API_URL: http://api:8000
+      SAG_SECRET_KEY: ${SAG_SECRET_KEY:-change-me-in-production}
+      SAG_MCP_PORT: 9003
+    ports:
+      - "9003:9003"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
