@@ -3,6 +3,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-orange.svg)](https://modelcontextprotocol.io)
+[![M8ven Score](https://m8ven.ai/badge/mcp/guazixiong-sag-mcp-server-1eicq0?v=221a3722c3a0755ad59d3fd94fcbc9f1)](https://m8ven.ai/mcp/guazixiong-sag-mcp-server-1eicq0)
 
 [English](#features) | [中文](#中文文档)
 
