@@ -30,6 +30,7 @@ for _name in ("httpx", "httpcore", "urllib3"):
 
 import httpx  # noqa: E402
 from mcp.server.fastmcp import FastMCP  # noqa: E402
+from mcp.types import ToolAnnotations  # noqa: E402
 from pydantic import Field  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -108,10 +109,28 @@ mcp = FastMCP(
     ),
 )
 
+# Tool annotations: every tool talks to the external SAG API, so openWorldHint is
+# always true; the other hints reflect whether the handler mutates server state.
+_READONLY = ToolAnnotations(
+    readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True
+)
+_WRITE = ToolAnnotations(
+    readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True
+)
+_IDEMPOTENT_WRITE = ToolAnnotations(
+    readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=True
+)
+_DESTRUCTIVE = ToolAnnotations(
+    readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=True
+)
+_TRIGGER = ToolAnnotations(
+    readOnlyHint=True, destructiveHint=False, idempotentHint=False, openWorldHint=True
+)
+
 # ========================= Source Management ===============================
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READONLY)
 def list_sources() -> str:
     """List all knowledge base sources (name, document count, chunk count)."""
     sources = _api("GET", "/api/v1/sources")
@@ -126,7 +145,7 @@ def list_sources() -> str:
     return "\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITE)
 def create_source(
     name: Annotated[str, Field(description="Source name")],
     description: Annotated[str, Field(description="Source description")] = "",
@@ -136,7 +155,7 @@ def create_source(
     return f"Source created: {result['name']} (id: {result['id']})"
 
 
-@mcp.tool()
+@mcp.tool(annotations=_DESTRUCTIVE)
 def delete_source(
     source_id: Annotated[str, Field(description="Source ID from list_sources")],
 ) -> str:
@@ -148,7 +167,7 @@ def delete_source(
 # ========================= Document Management =============================
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READONLY)
 def list_documents(
     source_id: Annotated[str, Field(description="Source ID")],
 ) -> str:
@@ -165,7 +184,7 @@ def list_documents(
     return "\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITE)
 def upload_document(
     source_id: Annotated[str, Field(description="Source ID")],
     file_path: Annotated[str, Field(description="Local file absolute path")],
@@ -186,7 +205,7 @@ def upload_document(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITE)
 def ingest_text(
     source_id: Annotated[str, Field(description="Source ID")],
     text: Annotated[str, Field(description="Text content to write")],
@@ -200,7 +219,7 @@ def ingest_text(
     return f"Ingested: {result['filename']} (id: {result['id']}) | {result['status']}"
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITE)
 def reprocess_document(
     source_id: Annotated[str, Field(description="Source ID")],
     document_id: Annotated[str, Field(description="Document ID")],
@@ -210,7 +229,7 @@ def reprocess_document(
     return f"Reprocess triggered, job: {result.get('id', '?')}"
 
 
-@mcp.tool()
+@mcp.tool(annotations=_IDEMPOTENT_WRITE)
 def pause_document(
     source_id: Annotated[str, Field(description="Source ID")],
     document_id: Annotated[str, Field(description="Document ID")],
@@ -220,7 +239,7 @@ def pause_document(
     return f"Paused, job: {result.get('id', '?')}"
 
 
-@mcp.tool()
+@mcp.tool(annotations=_IDEMPOTENT_WRITE)
 def resume_document(
     source_id: Annotated[str, Field(description="Source ID")],
     document_id: Annotated[str, Field(description="Document ID")],
@@ -230,7 +249,7 @@ def resume_document(
     return f"Resumed, job: {result.get('id', '?')}"
 
 
-@mcp.tool()
+@mcp.tool(annotations=_DESTRUCTIVE)
 def delete_document(
     source_id: Annotated[str, Field(description="Source ID")],
     document_id: Annotated[str, Field(description="Document ID")],
@@ -243,7 +262,7 @@ def delete_document(
 # ========================= Retrieval (Read-Only) ===========================
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READONLY)
 def search(
     query: Annotated[str, Field(description="Search query")],
     top_k: Annotated[int, Field(description="Max results (1-50, default 8)")] = 8,
@@ -270,7 +289,7 @@ def search(
     return "\n\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READONLY)
 def get_entity(
     source_id: Annotated[str, Field(description="Source ID")],
     entity_name: Annotated[str, Field(description="Entity name")],
@@ -281,7 +300,7 @@ def get_entity(
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READONLY)
 def outline(
     source_id: Annotated[str, Field(description="Source ID")],
 ) -> str:
@@ -290,7 +309,7 @@ def outline(
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READONLY)
 def grep(
     source_id: Annotated[str, Field(description="Source ID")],
     keyword: Annotated[str, Field(description="Keyword or regex pattern")],
@@ -308,7 +327,7 @@ def grep(
     return "\n\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READONLY)
 def read_document(
     source_id: Annotated[str, Field(description="Source ID")],
     document_id: Annotated[str, Field(description="Document ID")],
@@ -321,7 +340,7 @@ def read_document(
 # ========================= Model Configuration =============================
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READONLY)
 def get_model_config() -> str:
     """View current LLM / Embedding model configuration."""
     result = _api("GET", "/api/v1/system/model-config")
@@ -330,7 +349,7 @@ def get_model_config() -> str:
     return "Current model config:\n" + "\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_IDEMPOTENT_WRITE)
 def update_model_config(
     llm_model: Annotated[str, Field(description="LLM model name")] = "",
     llm_base_url: Annotated[str, Field(description="LLM API base URL")] = "",
@@ -357,7 +376,7 @@ def update_model_config(
     return f"Config updated: {json.dumps(updates, ensure_ascii=False)}"
 
 
-@mcp.tool()
+@mcp.tool(annotations=_TRIGGER)
 def test_model_config() -> str:
     """Test current model configuration (send a test request)."""
     result = _api("POST", "/api/v1/system/model-config/test")
